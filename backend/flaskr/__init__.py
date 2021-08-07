@@ -3,6 +3,7 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+import traceback
 
 from models import setup_db, Question, Category
 
@@ -84,27 +85,46 @@ def create_app(test_config=None):
     })
 
 
-  '''
-  @TODO:
-  Create an endpoint to POST a new question,
-  which will require the question and answer text,
-  category, and difficulty score.
 
-  TEST: When you submit a question on the "Add" tab,
-  the form will clear and the question will appear at the end of the last page
-  of the questions list in the "List" tab.
-  '''
+  @app.route('/questions', methods=['POST'])
+  def add_question():
+    body = request.get_json()
 
-  '''
-  @TODO:
-  Create a POST endpoint to get questions based on a search term.
-  It should return any questions for whom the search term
-  is a substring of the question.
+    question = body.get('question')
+    answer = body.get('answer')
+    category = body.get('category')
+    difficulty = body.get('difficulty')
 
-  TEST: Search by any phrase. The questions list will update to include
-  only question that include that string within their question.
-  Try using the word "title" to start.
-  '''
+    search_term = body.get('searchTerm')
+
+    try:
+      if search_term:
+        result = Question.query.order_by(Question.id).filter(Question.question.ilike('%' + search_term + '%'))
+        current_questions = paginate_questions(result, request)
+
+        return jsonify({
+          'success': True,
+          'questions': current_questions,
+          'total_questions': len(result.all())
+        })
+      else:
+        question_record = Question(
+          question = question,
+          answer = answer,
+          category = category,
+          difficulty = difficulty
+        )
+        question_record.insert()
+
+        return jsonify({
+          'success': True,
+          'created': question_record.id,
+          'total_questions': len(Question.query.all())
+        })
+    except:
+      traceback.print_exc()
+      abort(422)
+
 
   '''
   @TODO:

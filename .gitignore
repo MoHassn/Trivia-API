@@ -15,3 +15,6 @@ Thumbs.db
 
 # node modules #
 node_modules/
+
+# environment variables #
+backend/.env
